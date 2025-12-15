@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Unit 1 — JDBC & Database Connectivity</title>
+
+  <!-- Prism for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet"/>
+  <style>
+    :root{--accent:#0f62fe;--bg:#f6f7fb}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#0b2545;margin:0;padding-bottom:40px}
+    header{background:linear-gradient(90deg,var(--accent),#2fa8ff);color:#fff;padding:18px 0}
+    .container{max-width:1100px;margin:24px auto;padding:0 18px}
+    .card{background:#fff;padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(16,42,67,0.06);margin-bottom:18px}
+    nav a{color:#fff;text-decoration:none;margin-right:12px}
+    h1,h2{margin:6px 0}
+    pre{border-radius:8px;overflow:auto;padding:14px}
+    .meta{font-size:0.95rem;color:#334155;margin-bottom:8px}
+    .output{background:#0b243f;color:#e6f0ff;padding:12px;border-radius:8px;white-space:pre-wrap}
+    .back{display:inline-block;margin-top:12px;padding:8px 12px;background:#eef6ff;border-radius:8px;color:var(--accent);text-decoration:none}
+    .section-title{display:flex;align-items:center;gap:12px}
+    .note{font-size:0.95rem;color:#6b7280}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav><a href="index.html">⬅ Back to Home</a></nav>
+      <h1>UNIT 1 — JDBC &amp; DATABASE CONNECTIVITY</h1>
+      <div class="meta">Instructions / Required Libraries (MS Access: UCanAccess, MySQL: Connector/J)</div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="card" id="instructions">
+      <h2 class="section-title">Instructions / Required Libraries</h2>
+      <p class="note">
+        Use NetBeans or any Java IDE. Add JDBC driver jars to the project's Libraries:
+      </p>
+      <ul>
+        <li><strong>MS Access (no DSN)</strong>: <code>ucanaccess.jar</code> plus its dependencies (jackcess, commons-lang, etc.).</li>
+        <li><strong>MySQL</strong>: <code>mysql-connector-java-5.1.x.jar</code> (or 8.x driver — change driver class accordingly).</li>
+        <li>Place your MS Access file (example: <code>D:/thaniDatabase.accdb</code>) or configure your MySQL DB on localhost.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="access">
+      <h2 class="section-title">MS Access connection (without DSN) — Java</h2>
+      <p class="note">Create table <code>Student(ID Number, Name Short Text)</code> in Access and save as <code>D:\thaniDatabase.accdb</code>.</p>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class AccessNoDSN {
+    public static void main(String[] args) {
+        try {
+            // UCanAccess driver
+            Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
+
+            String path = "D:/thaniDatabase.accdb"; // change if needed
+            String url = "jdbc:ucanaccess://" + path;
+
+            Connection con = DriverManager.getConnection(url);
+            Statement st = con.createStatement();
+
+            ResultSet rs = st.executeQuery("SELECT * FROM Student");
+
+            while (rs.next()) {
+                System.out.println(rs.getInt("ID") + "  " + rs.getString("Name"));
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">
+1  Varshi
+2  Hima Varsha
+3  Chinta
+(Displayed by: Hima Varsha)
+      </div>
+    </section>
+
+    <section class="card" id="mysql-update">
+      <h2 class="section-title">Connect Java to MySQL (localhost) — Update &amp; Display</h2>
+
+      <h3>SQL / DB</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS project1;
+USE project1;
+
+CREATE TABLE IF NOT EXISTS Employee (
+  empid INT PRIMARY KEY,
+  name VARCHAR(100),
+  age INT,
+  salary INT
+);
+
+INSERT INTO Employee VALUES (1,'Ramesh',25,45000);
+INSERT INTO Employee VALUES (2,'Suresh',26,50000);
+INSERT INTO Employee VALUES (3,'Raju',29,55000);</code></pre>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class Mysql1 {
+    public static void main(String[] args) {
+        try {
+            // For connector 5.1.x
+            Class.forName("com.mysql.jdbc.Driver");
+
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/project1", "root", "");
+
+            Statement st = con.createStatement();
+
+            st.executeUpdate("UPDATE Employee SET age=27 WHERE empid=2");
+            st.executeUpdate("UPDATE Employee SET salary=80000 WHERE empid=2");
+
+            ResultSet rs = st.executeQuery("SELECT * FROM Employee");
+
+            while (rs.next()) {
+                System.out.println(
+                    rs.getInt("empid") + " " +
+                    rs.getString("name") + " " +
+                    rs.getInt("age") + " " +
+                    rs.getInt("salary")
+                );
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">
+1 Ramesh 25 45000
+2 Varsha 27 80000
+3 Raju 29 55000
+(Updated &amp; displayed by: Varsha)
+      </div>
+    </section>
+
+    <section class="card" id="mysql-ip">
+      <h2 class="section-title">Accessing MySQL from another computer (IP)</h2>
+      <p class="note">Ensure MySQL allows remote connections, set user privileges for remote hosts, and open port 3306.</p>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class MysqlIP {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+
+            // Replace 10.0.9.7 with the server's IP
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://10.0.9.7:3306/project", "root", "");
+
+            Statement st = con.createStatement();
+
+            st.executeUpdate("DELETE FROM Student WHERE rollno=1");
+
+            ResultSet rs = st.executeQuery("SELECT * FROM Student");
+
+            while (rs.next()) {
+                System.out.println(rs.getInt("rollno") + " " + rs.getString("name"));
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">
+2 Varshi
+3 Chinta
+(Accessed remotely by: Varsha)
+      </div>
+    </section>
+
+    <section class="card" id="crud-student">
+      <h2 class="section-title">CRUD operations on Student database</h2>
+
+      <h3>SQL</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS studentdb;
+USE studentdb;
+
+CREATE TABLE IF NOT EXISTS student (
+  rollno INT PRIMARY KEY,
+  name VARCHAR(100),
+  marks INT
+);</code></pre>
+
+      <h3>Java code (CRUD)</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class StudentCRUD {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/studentdb", "root", "");
+
+            Statement st = con.createStatement();
+
+            // INSERT
+            st.executeUpdate("INSERT INTO student VALUES(1,'Thani',90)");
+            st.executeUpdate("INSERT INTO student VALUES(2,'Bezawada',88)");
+
+            // UPDATE
+            st.executeUpdate("UPDATE student SET marks=95 WHERE rollno=1");
+
+            // DELETE (example)
+            st.executeUpdate("DELETE FROM student WHERE rollno=2");
+
+            // SELECT
+            ResultSet rs = st.executeQuery("SELECT * FROM student");
+
+            while (rs.next()) {
+                System.out.println(
+                  rs.getInt("rollno") + " " +
+                  rs.getString("name") + " " +
+                  rs.getInt("marks")
+                );
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">1 Varshi 95
+(Performed CRUD operations — by: Hima Varsha)</div>
+    </section>
+
+    <section class="card" id="callable-insert">
+      <h2 class="section-title">Insert into Person table using CallableStatement</h2>
+
+      <h3>SQL (procedure)</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS mydb;
+USE mydb;
+
+CREATE TABLE IF NOT EXISTS Person (
+  PersonID INT,
+  FirstName VARCHAR(255),
+  City VARCHAR(255)
+);
+
+DELIMITER $$
+CREATE PROCEDURE insertPerson(IN pid INT, IN pname VARCHAR(255), IN pcity VARCHAR(255))
+BEGIN
+  INSERT INTO Person VALUES(pid, pname, pcity);
+END$$
+DELIMITER ;</code></pre>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class CallableInsert {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/mydb", "root", "");
+
+            CallableStatement cs = con.prepareCall("{call insertPerson(?,?,?)}");
+            cs.setInt(1, 101);
+            cs.setString(2, "Thanishma");
+            cs.setString(3, "Vijayawada");
+
+            cs.execute();
+
+            cs.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">Person Inserted Successfully
+(Inserted by: Varshi)</div>
+    </section>
+
+    <section class="card" id="prepared-salary">
+      <h2 class="section-title">PreparedStatement — Select employees with salary &gt; X</h2>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+import java.util.Scanner;
+
+public class SalaryFilter {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter X salary: ");
+        int x = sc.nextInt();
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/project1", "root", "");
+
+            PreparedStatement ps = con.prepareStatement(
+                "SELECT empid, name, salary FROM Employee WHERE salary > ?"
+            );
+            ps.setInt(1, x);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                System.out.println(rs.getInt("empid") + " " +
+                                   rs.getString("name") + " " +
+                                   rs.getInt("salary"));
+            }
+
+            rs.close();
+            ps.close();
+            con.close();
+            sc.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output (if X = 50000)</h3>
+      <div class="output">
+Enter X salary: 50000
+103 Teja 60000
+(Displayed by: Varshi)
+      </div>
+    </section>
+
+    <section class="card" id="product-ps">
+      <h2 class="section-title">Product table — Insert & display using PreparedStatement</h2>
+
+      <h3>SQL</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS shop;
+USE shop;
+
+CREATE TABLE IF NOT EXISTS product(
+  sno INT,
+  pno INT,
+  pname VARCHAR(100),
+  price INT,
+  PRIMARY KEY (sno, pno)
+);</code></pre>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class ProductPS {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/shop", "root", "");
+
+            PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO product (sno,pno,pname,price) VALUES (?,?,?,?)"
+            );
+
+            ps.setInt(1, 1);
+            ps.setInt(2, 101);
+            ps.setString(3, "Laptop");
+            ps.setInt(4, 55000);
+            ps.executeUpdate();
+
+            ResultSet rs = con.createStatement().executeQuery("SELECT * FROM product");
+            while (rs.next()) {
+                System.out.println(
+                    rs.getInt("sno") + " " +
+                    rs.getInt("pno") + " " +
+                    rs.getString("pname") + " " +
+                    rs.getInt("price")
+                );
+            }
+
+            rs.close();
+            ps.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">1 101 Laptop 55000
+(Inserted &amp; displayed by: Hima Varsha)</div>
+    </section>
+
+    <section class="card" id="delete-dept">
+      <h2 class="section-title">Delete Department — using CallableStatement</h2>
+
+      <h3>SQL (procedure)</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS deptdb;
+USE deptdb;
+
+CREATE TABLE IF NOT EXISTS Department (
+  deptno INT PRIMARY KEY,
+  deptname VARCHAR(255),
+  city VARCHAR(255)
+);
+
+DELIMITER $$
+CREATE PROCEDURE deleteDept(IN dno INT)
+BEGIN
+  DELETE FROM Department WHERE deptno = dno;
+END$$
+DELIMITER ;</code></pre>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class DeleteDeptCallable {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/deptdb", "root", "");
+
+            CallableStatement cs = con.prepareCall("{call deleteDept(?)}");
+            cs.setInt(1, 10); // pass deptno to delete
+            cs.execute();
+
+            cs.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">Department Deleted Successfully
+(Deleted by: Thanishma)</div>
+    </section>
+
+    <section class="card" id="book-crud">
+      <h2 class="section-title">Book table — CRUD operations</h2>
+
+      <h3>SQL</h3>
+      <pre class="language-sql"><code>CREATE DATABASE IF NOT EXISTS bookdb;
+USE bookdb;
+
+CREATE TABLE IF NOT EXISTS book (
+  sno INT,
+  bno INT,
+  bname VARCHAR(255),
+  price INT,
+  PRIMARY KEY (sno, bno)
+);</code></pre>
+
+      <h3>Java code</h3>
+      <pre class="language-java"><code>import java.sql.*;
+
+public class BookCRUD {
+    public static void main(String[] args) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection con = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/bookdb", "root", "");
+
+            Statement st = con.createStatement();
+
+            // INSERT
+            st.executeUpdate("INSERT INTO book VALUES(1,101,'Java Programming',300)");
+            // UPDATE
+            st.executeUpdate("UPDATE book SET price=350 WHERE bno=101");
+            // DELETE
+            st.executeUpdate("DELETE FROM book WHERE bno=101");
+
+            // SELECT
+            ResultSet rs = st.executeQuery("SELECT * FROM book");
+            while (rs.next()) {
+                System.out.println(
+                    rs.getInt("sno") + " " +
+                    rs.getInt("bno") + " " +
+                    rs.getString("bname") + " " +
+                    rs.getInt("price")
+                );
+            }
+
+            rs.close();
+            st.close();
+            con.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}</code></pre>
+
+      <h3>Sample Output</h3>
+      <div class="output">Book CRUD Executed
+(Performed by: Hima Varsha)</div>
+    </section>
+
+    <section class="card" id="concepts">
+      <h2 class="section-title">JDBC — Quick Concepts &amp; Examples</h2>
+      <ul>
+        <li><strong>Driver Types:</strong> Use Type 4 drivers (native protocol). UCanAccess is good for Access without DSN.</li>
+        <li><strong>Statement types:</strong> Statement, PreparedStatement (safer), CallableStatement (stored procedures).</li>
+        <li><strong>ResultSet:</strong> iterate with <code>next()</code>, read with <code>getInt()</code>, <code>getString()</code> etc.</li>
+      </ul>
+
+      <h3>Small example (PreparedStatement)</h3>
+      <pre class="language-java"><code>// Using PreparedStatement
+PreparedStatement ps = con.prepareStatement("SELECT name FROM student WHERE rollno = ?");
+ps.setInt(1, 1);
+ResultSet rs = ps.executeQuery();
+if (rs.next()) {
+  System.out.println(rs.getString("name"));
+}</code></pre>
+
+      <p class="note">Notes: For Connector/J 8.x use driver class <code>com.mysql.cj.jdbc.Driver</code> and consider adding <code>?serverTimezone=UTC</code> to the URL. Always close ResultSet, Statement and Connection (or use try-with-resources).</p>
+    </section>
+
+    <a class="back" href="index.html">⬅ Back to Home</a>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

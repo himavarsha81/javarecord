@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Unit 3 — Cookies & Sessions</title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet"/>
+  <style>
+    :root{--accent:#0f62fe;--bg:#f6f7fb}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#0b2545;margin:0;padding-bottom:40px}
+    header{background:linear-gradient(90deg,var(--accent),#2fa8ff);color:#fff;padding:18px 0}
+    .container{max-width:1000px;margin:24px auto;padding:0 18px}
+    .card{background:#fff;padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(16,42,67,0.06);margin-bottom:18px}
+    nav a{color:#fff;text-decoration:none;margin-right:12px}
+    h1,h2{margin:6px 0}
+    pre{border-radius:8px;overflow:auto;padding:14px}
+    .output{background:#0b243f;color:#e6f0ff;padding:12px;border-radius:8px;white-space:pre-wrap}
+    .back{display:inline-block;margin-top:12px;padding:8px 12px;background:#eef6ff;border-radius:8px;color:var(--accent);text-decoration:none}
+    .note{font-size:0.95rem;color:#6b7280}
+    form { margin-top:12px; }
+    label { display:block; margin:8px 0 4px; }
+    input[type="text"], input[type="number"] { padding:8px; width:280px; border:1px solid #d1d5db; border-radius:6px; }
+    input[type="submit"] { margin-top:10px; padding:8px 12px; border-radius:6px; background:var(--accent); color:#fff; border:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav><a href="index.html">⬅ Back to Home</a></nav>
+      <h1>UNIT 3 — COOKIES &amp; SESSIONS</h1>
+      <div class="note">Examples: set/read cookies, set/read session attributes. Names updated to Hima Varsha / Varshi / Chinta.</div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Cookies -->
+    <section class="card" id="cookies">
+      <h2>Cookies Example</h2>
+      <p>HTML form to send details to servlet that sets a cookie (roll number).</p>
+
+      <h3>form (cookies_form.html)</h3>
+      <pre class="language-html"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+  &lt;h2&gt;Enter Your Details&lt;/h2&gt;
+  &lt;form method="post" action="servlet1"&gt;
+    &lt;label&gt;Name:&lt;input type="text" name="userName" /&gt;&lt;/label&gt;
+    &lt;label&gt;Roll Number:&lt;input type="text" name="rollNumber" /&gt;&lt;/label&gt;
+    &lt;input type="submit" value="Submit" /&gt;
+  &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+      <h3>FirstServlet (Cookie Setter) — Firstservlet.java</h3>
+      <pre class="language-java"><code>import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class Firstservlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        String name = request.getParameter("userName");
+        String roll = request.getParameter("rollNumber");
+
+        out.println("&lt;h2&gt;Welcome " + name + "&lt;/h2&gt;");
+
+        Cookie rollCookie = new Cookie("rollNum", roll);
+        rollCookie.setMaxAge(60 * 60); // 1 hour
+        response.addCookie(rollCookie);
+
+        out.print("&lt;p&gt;Cookie set. &lt;a href='servlet2'&gt;Go read cookie&lt;/a&gt;&lt;/p&gt;");
+    }
+}</code></pre>
+
+      <h3>SecondServlet (Cookie Reader) — Secondservlet.java</h3>
+      <pre class="language-java"><code>import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class Secondservlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        Cookie[] cookies = request.getCookies();
+        String roll = "";
+
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("rollNum".equals(c.getName())) {
+                    roll = c.getValue();
+                }
+            }
+        }
+
+        out.println("&lt;h3&gt;Hello! Your roll number is: " + roll + "&lt;/h3&gt;");
+      }
+}</code></pre>
+
+      <h3>web.xml mapping (cookies)</h3>
+      <pre class="language-xml"><code>&lt;servlet&gt;
+  &lt;servlet-name&gt;FirstServlet&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;Firstservlet&lt;/servlet-class&gt;
+&lt;/servlet&gt;
+&lt;servlet-mapping&gt;
+  &lt;servlet-name&gt;FirstServlet&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;/servlet1&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;
+
+&lt;servlet&gt;
+  &lt;servlet-name&gt;SecondServlet&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;Secondservlet&lt;/servlet-class&gt;
+&lt;/servlet&gt;
+&lt;servlet-mapping&gt;
+  &lt;servlet-name&gt;SecondServlet&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;/servlet2&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;</code></pre>
+
+      <h3>Sample Output (after submitting form)</h3>
+      <div class="output">Welcome Hima Varsha
+
+Hello! Your roll number is: 101</div>
+    </section>
+
+    <!-- Sessions -->
+    <section class="card" id="sessions">
+      <h2>Session Example</h2>
+      <p>HTML form to set session attributes and a servlet to read them.</p>
+
+      <h3>form (session_form.html)</h3>
+      <pre class="language-html"><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;body&gt;
+  &lt;h2&gt;Enter Your Details&lt;/h2&gt;
+  &lt;form method="post" action="servletSession1"&gt;
+    &lt;label&gt;Name:&lt;input type="text" name="userName" /&gt;&lt;/label&gt;
+    &lt;label&gt;Roll Number:&lt;input type="text" name="rollNumber" /&gt;&lt;/label&gt;
+    &lt;input type="submit" value="Submit" /&gt;
+  &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+      <h3>FirstServlet (Session Setter) — FirstServlet.java</h3>
+      <pre class="language-java"><code>import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class FirstServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        String name = request.getParameter("userName");
+        String roll = request.getParameter("rollNumber");
+
+        HttpSession session = request.getSession();
+        session.setAttribute("userName", name);
+        session.setAttribute("rollNumber", roll);
+
+        // Redirect to second servlet (which reads session)
+        response.sendRedirect("servletSession2");
+    }
+}</code></pre>
+
+      <h3>SecondServlet (Session Reader) — SecondServlet.java</h3>
+      <pre class="language-java"><code>import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class SecondServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            out.println("&lt;h3&gt;No session exists. Please submit the form first.&lt;/h3&gt;");
+            return;
+        }
+
+        String name = (String) session.getAttribute("userName");
+        String roll = (String) session.getAttribute("rollNumber");
+
+        out.println("&lt;h3&gt;Session Data:&lt;/h3&gt;");
+        out.println("&lt;p&gt;Name: " + name + "&lt;/p&gt;");
+        out.println("&lt;p&gt;Roll Number: " + roll + "&lt;/p&gt;");
+    }
+}</code></pre>
+
+      <h3>web.xml mapping (sessions)</h3>
+      <pre class="language-xml"><code>&lt;servlet&gt;
+  &lt;servlet-name&gt;FirstServlet&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;FirstServlet&lt;/servlet-class&gt;
+&lt;/servlet&gt;
+&lt;servlet-mapping&gt;
+  &lt;servlet-name&gt;FirstServlet&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;/servletSession1&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;
+
+&lt;servlet&gt;
+  &lt;servlet-name&gt;SecondServlet&lt;/servlet-name&gt;
+  &lt;servlet-class&gt;SecondServlet&lt;/servlet-class&gt;
+&lt;/servlet&gt;
+&lt;servlet-mapping&gt;
+  &lt;servlet-name&gt;SecondServlet&lt;/servlet-name&gt;
+  &lt;url-pattern&gt;/servletSession2&lt;/url-pattern&gt;
+&lt;/servlet-mapping&gt;</code></pre>
+
+      <h3>Sample Output (after redirect)</h3>
+      <div class="output">Session Data:
+Name: Hima Varsha
+Roll Number: 202</div>
+    </section>
+
+    <section class="card" id="notes">
+      <h2>Notes & Tips</h2>
+      <ul>
+        <li>Use GET for cookie-reading servlet (or handle both doGet/doPost as needed).</li>
+        <li>Cookies are client-side; don't store sensitive info in plain cookies.</li>
+        <li>Sessions are server-side and suitable for temporary per-user state.</li>
+        <li>Always validate inputs and escape outputs in production code.</li>
+        <li>All example outputs above now use your names: <strong>Hima Varsha</strong> / <strong>Varshi</strong> / <strong>Chinta</strong>.</li>
+      </ul>
+    </section>
+
+    <a class="back" href="index.html">⬅ Back to Home</a>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
